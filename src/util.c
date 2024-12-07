@@ -25,17 +25,16 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+
 int validatedRead(int sockfd, char *response, int size, char *error) {
-    fprintf(stderr, ":Start reading from the server\n"); 
     int n = read(sockfd, response, size); 
-    fprintf(stderr, ":Finished reading from the server\n"); 
     if (n < 0) {
-        //char error[strlen("")]
         printf("%s", error);
         exit(SERVER_ERROR);
     }
     return n;
 }
+
 
 int validatedWrite(int sockfd, char *msg, int size, char *error) {
     int n = write(sockfd, msg, size);
@@ -46,12 +45,14 @@ int validatedWrite(int sockfd, char *msg, int size, char *error) {
     return n;
 }
 
+
 void assertMalloc(void *memory) {
     if (!memory) {
         printf("Failure in Memory Allocation\n"); 
         exit(GENERAL_ERROR); 
     }
 }
+
 
 /* Keep reading until reaching the tag; store all the content read into `content`.
     If the server response status is not "OK", exit. 
@@ -69,41 +70,31 @@ int readAndStoreUntilTag(int sockfd, char **content, int *capacity, char *tag) {
     int n;              // the length of the response from the server 
     int contentLen = 0;     // the number of character read into `content`
 
-    fprintf(stderr, "- tag=%s\n", tag); 
 
     /* Keep reading until the tag is read */
     while (!success) {
-        fprintf(stderr, "not suceess, keep reading next slot\n");
         n = validatedRead(sockfd, response, DEFAULT_BUFFER_SIZE, "Invalid read from the server\n"); 
-        fprintf(stderr, "\n----------------:\n- response(%d) = %s\n----------------\n", n, response);
-        // printf("%s", response);
 
         if (!tagged) {
             for (i=0; i<n; i++) {
-                //fprintf(stderr, "checking %d -> %c\n", i, response[i]); 
 
                 /* If read the tag, update flag and break */
                 if (cmp >= tagLen) {
                     tagged = 1; 
                     tagLen = strlen(OK_MSG_SP); 
-                    fprintf(stderr, "-tagged-\n"); 
                     break; 
                 }
 
                 /* Store the content of the email */
                 if (contentLen >= *capacity) {
-                    // fprintf(stderr, "-realloc content-\n"); 
                     *capacity *= 2; 
                     *content = realloc(*content, *capacity); 
                 }
                 (*content)[contentLen] = response[i];
-                // fprintf(stderr, "%c", content[contentLen]); 
-                // fprintf(stdout, "%c", content[contentLen]); 
                 contentLen++; 
 
                 /* Check if all brackets are enclosed */
                 if (bracket == 0) {
-                    // fprintf(stderr, "- bracket is 0, check = %c\n", response[i]); 
 
                     /* Check if we are at the end of the line, so we know when to check for the tag */
                     if (isLineFinished == LINE_NOT_FINISHED) {
@@ -111,7 +102,6 @@ int readAndStoreUntilTag(int sockfd, char **content, int *capacity, char *tag) {
                     } else if (isLineFinished == LINE_ABOUT_TO_FINISH) {
                         if (response[i] == '\n') { 
                             isLineFinished = LINE_FINISHED; 
-                            // fprintf(stderr, "-CRLF detected-\n"); 
                         } 
                         else { isLineFinished = LINE_NOT_FINISHED; }
                     } else if (isLineFinished == LINE_FINISHED) {
@@ -136,20 +126,15 @@ int readAndStoreUntilTag(int sockfd, char **content, int *capacity, char *tag) {
         } 
 
         /* Found the response tag, compare the response status after the tag */
-        fprintf(stderr, "-checking for ok, tagged=%d, success=%d-\n", tagged, success); 
         if (tagged) {
-            fprintf(stderr, "-tagged: checking for ok-\n"); 
             for (cmp=0; i+cmp<n; cmp++) {
-                fprintf(stderr, "comparing response=%c and okmsg=%c\n", response[i+cmp], OK_MSG_SP[cmp]); 
                 if (cmp >= tagLen) {
                     /* OK - Successfully fetched */
                     success = 1; 
-                    fprintf(stderr, "-ok!-\n"); 
                     break; 
                 }
                 if (response[i+cmp] != OK_MSG_SP[cmp]) {
                     /* Failure to perform the command, exit */
-                    fprintf(stderr, "-not ok!-\n"); 
                     printf("%s", MESSAGE_NOT_FOUND); 
                     exit(SERVER_ERROR); 
                 }
@@ -158,12 +143,9 @@ int readAndStoreUntilTag(int sockfd, char **content, int *capacity, char *tag) {
     }
     assert(bracket==0);     // sanity check 
 
-    // for (int t=0; t<contentLen; t++) {
-    //     fprintf(stdout, "%c", (*content)[t]); 
-    // }
-
     return contentLen; 
 }
+
 
 int max(int x, int y) {
     if (x > y) {

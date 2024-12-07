@@ -6,13 +6,11 @@
 #include <unistd.h>
 #include "cmd_retrieve.c"
 #include "cmd_parse.c"
-#include "cmd_mime.c"
 #include "cmd_list.c"
 #include "util.c"
 
 #define RETRIEVE "retrieve"
 #define PARSE "parse"
-#define MIME "mime"
 #define LIST "list"
 #define DEFAULT_FOLDER "INBOX"
 #define DEFAULT_MSG_NUM "*"
@@ -113,22 +111,13 @@ int main(int argc, char **argv) {
         exit(CMD_ARG_ERROR); 
     }
 
-    fprintf(stderr, "\n------- Input -------\n\n");
-    fprintf(stderr, "username = %s \npassword = %s \nserverName = %s \nfolder = %s \nmessageNum = %s \ncommand = %c\n", 
-            username, password, serverName, folder, messageNum, command); 
-    fprintf(stderr, "\n------- ----- -------\n\n");
-
     int sockfd = connectSocket(serverName); 
 
     /* Log in */
-
     login(sockfd, username, password); 
-
-    
 
     /* Select a folder */
     selectFolder(sockfd, folder); 
-
 
     /* Run program */
     if (command == RETRIEVE[0]) {
@@ -137,14 +126,9 @@ int main(int argc, char **argv) {
     } else if (command == PARSE[0]) {
         /* Parse the email */
         parse(sockfd, messageNum); 
-        
-    } else if (command == MIME[0]) {
-        Mime(sockfd, messageNum);
-
     } else if (command == LIST[0]) {
         /* List the subject lines of all the emails in the specified folder */
         list(sockfd); 
-
     }
 
     free(username); 
@@ -175,7 +159,6 @@ int connectSocket(char *serverName) {
 
         /* If failure to connect to IPv4 socket also, exit with failure */
         if (s != 0) {
-            fprintf(stderr, "getaddrinfo() error: %s\n", gai_strerror(s));
             exit(CONNECTION_ERROR); 
         }
     }
@@ -213,7 +196,6 @@ void login(int sockfd, char *username, char *password) {
     strcat(loginMsg, SP); 
     strcat(loginMsg, password); 
     strcat(loginMsg, CRLF); 
-    fprintf(stderr, "- loginMsg = %s\n", loginMsg); 
     
     validatedWrite(sockfd, loginMsg, loginMsgLen, "Failure in sending LOGIN command to the server\n");
     free(loginMsg); 
@@ -252,7 +234,6 @@ void selectFolder(int sockfd, char *folder) {
     strcat(folderSelectionMsg, SELECT_FOLDER_MSG_SP); 
     strcat(folderSelectionMsg, folder); 
     strcat(folderSelectionMsg, CRLF); 
-    fprintf(stderr, "- folderSelectionMsg = %s\n", folderSelectionMsg); 
 
     /* Send message to server */
     validatedWrite(sockfd, folderSelectionMsg, strlen(folderSelectionMsg), "Failure in sending SELECT command to the server\n");
@@ -272,7 +253,6 @@ void validateResponse(int sockfd, char *tag, char *errorMsg) {
     int tagged = 0; 
     while (!success) {
         n = validatedRead(sockfd, response, 1024, errorMsg); 
-        fprintf(stderr, "- response = %s\n", response);
 
         /* Try to read the tag */
         if (!tagged) {
@@ -301,16 +281,13 @@ void validateResponse(int sockfd, char *tag, char *errorMsg) {
 
         if (tagged) {
             for (cmp=0; i+cmp<n; cmp++) {
-                // fprintf(stderr, "comparing response=%c and okmsg=%c\n", response[i+cmp], OK_MSG_SP[cmp]); 
                 if (cmp >= targetLen) {
                     /* OK - Successfully fetched */
                     success = 1; 
-                    fprintf(stderr, "-ok!-\n"); 
                     break; 
                 }
                 if (response[i+cmp] != OK_MSG_SP[cmp]) {
                     /* Failure to perform the command, exit */
-                    fprintf(stderr, "-not ok!-\n"); 
                     printf("%s", errorMsg); 
                     exit(SERVER_ERROR); 
                 }

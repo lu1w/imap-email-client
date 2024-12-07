@@ -23,8 +23,6 @@ Output:
     To: address-list 
     Date: date-time 
     Subject: unstructured
-
-IMAP commands such as BODY.PEEK[HEADER.FIELDS (FROM)] or ENVELOPE that explicitly fetch header fields
 */
 
 void writeParseCmd(int sockfd, char *messageNum, char *tag, char *cmd); 
@@ -63,18 +61,6 @@ void parse(int sockfd, char *messageNum) {
     free(content); 
 }
 
-// void parseTo(int sockfd, char *messageNum) {
-//     int capacity = 1024; 
-//     int contentLen; 
-//     char *content = malloc(capacity); 
-
-//     /* Read TO */
-//     writeParseCmd(sockfd, messageNum, PARSE_TO_TAG_SP, PEEK_HEADER_TO);
-//     contentLen = readAndStoreUntilTag(sockfd, &content, &capacity, PARSE_TO_TAG_SP); 
-//     printHeaders(content, contentLen); 
-
-//     free(content); 
-// }
 
 void writeParseCmd(int sockfd, char *messageNum, char *tagSP, char *cmd) {
     /* Construct parse message */
@@ -86,7 +72,6 @@ void writeParseCmd(int sockfd, char *messageNum, char *tagSP, char *cmd) {
     strcat(parseMsg, SP); 
     strcat(parseMsg, cmd); 
     strcat(parseMsg, CRLF); 
-    fprintf(stderr, "- parseMsg = %s\n", parseMsg); 
 
     /* Send retrieve message to the server */
     validatedWrite(sockfd, parseMsg, parseMsgLen, "parse write failure");
@@ -94,19 +79,15 @@ void writeParseCmd(int sockfd, char *messageNum, char *tagSP, char *cmd) {
 }
 
 
-
 /* Print the header content, start at the first '(' and end when this bracket is closed. 
     Return the number of characters printed. 
  */
 int printHeaders(char *header, char *content, int contentLen) {
-    // fprintf(stderr, "-start printing email-\n"); 
     printf("%s", header); 
     int printed = 0; 
     int bracket = 0; 
     int body = 0; 
     for (int ch=0; ch<contentLen; ch++) {
-        fprintf(stderr, "(%c %d)", content[ch], content[ch]); 
-
         /* If we found the ending-bracket of the email, stop printing; 
             assuming there is ever going to be at most one message as discussed in ed#856 */
         if (content[ch] == ')') {
@@ -134,10 +115,8 @@ int printHeaders(char *header, char *content, int contentLen) {
         if (content[ch] == '(') {
             bracket++; 
             if (bracket == 1) {
-                fprintf(stderr, "-start the bracket at ch=%d-\n", ch); 
                 /* Start of the message, read the number of messages */
                 while (content[ch] != '\n') {
-                    fprintf(stderr, "not new line: %c\n", content[ch]); 
                     ch++;
                 }
             }

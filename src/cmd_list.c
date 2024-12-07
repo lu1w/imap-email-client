@@ -35,7 +35,6 @@ void writeListCmd(int sockfd) {
     strcpy(listMsg, LIST_TAG_SP); 
     strcat(listMsg, LIST_CMD); 
     strcat(listMsg, CRLF); 
-    fprintf(stderr, "- listMsg = %s\n", listMsg); 
 
     /* Send retrieve message to the server */
     validatedWrite(sockfd, listMsg, listMsgLen, "Failure in writing RETRIEVE command to the server\n");
@@ -47,13 +46,10 @@ void writeListCmd(int sockfd) {
     Return the number of characters printed. 
  */
 int printSubjects(char *content, int contentLen) {
-    // fprintf(stderr, "-start printing email-\n"); 
     int printed = 0; 
     int bracket = 0; 
     int body = 0; 
     for (int ch=0; ch<contentLen; ch++) {
-        fprintf(stderr, "%c", content[ch]); 
-        // fprintf(stderr, "(%c %d)", content[ch], content[ch]); 
 
         /* If we found the ending-bracket of the email, stop printing */
         if (content[ch] == ')') {
@@ -100,18 +96,13 @@ int printSubjects(char *content, int contentLen) {
         if (content[ch] == '(') {
             bracket++; 
             if (bracket == 1) {
-                fprintf(stderr, "-start the bracket at ch=%d-\n", ch); 
                 /* Start of the message, read the number of messages */
                 while (content[ch] != '\n') {
-                    fprintf(stderr, "not new line: %c\n", content[ch]); 
                     ch++;
                 }
             }
         } 
     }
-    // if (printed > 0) {
-    //     printf("\n"); 
-    // }
 
     return printed; 
 }
